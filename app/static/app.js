@@ -149,6 +149,23 @@ function processStreamMessage(message) {
   if (message.event === 'error') throw new Error(message.message || '서버 스트리밍 오류');
 }
 
+async function recoverRun(runId) {
+  if (!runId) return false;
+  appendLog('스트림 연결이 끝나 결과 상태를 복구하는 중입니다.', 'muted');
+  for (let attempt = 0; attempt < 15; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const response = await fetch(`/api/runs/${encodeURIComponent(runId)}`, { cache: 'no-store' });
+    if (!response.ok) continue;
+    const data = await response.json();
+    if (data.status && data.status !== 'running') {
+      appendLog('실행 상태 조회로 결과를 복구했습니다.', 'success');
+      render(data);
+      return true;
+    }
+  }
+  return false;
+}
+
 form.addEventListener('submit', async event => {
   event.preventDefault();
   button.disabled = true; results.hidden = true; empty.hidden = false; nodes.forEach(node => { node.className = ''; });
@@ -167,7 +184,9 @@ form.addEventListener('submit', async event => {
       if (done) break;
     }
     if (buffer.trim()) { const message = JSON.parse(buffer); processStreamMessage(message); if (message.event === 'complete') completed = true; }
-    if (!completed) throw new Error('서버가 complete 이벤트를 보내지 않았습니다. LIVE AGENT LOG를 확인하세요.');
+    if (!completed && !(await recoverRun(currentRunId))) {
+      throw new Error('서버가 complete 이벤트를 보내지 않았습니다. LIVE AGENT LOG를 확인하세요.');
+    }
   } catch (error) { showError(error); }
   finally { button.disabled = false; }
 });
