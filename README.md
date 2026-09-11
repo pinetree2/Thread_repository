@@ -215,7 +215,7 @@ python run.py
 CLI — Graph는 승인 interrupt에서 멈추며 JSON draft를 출력합니다.
 
 ```powershell
-python -m app.cli --region GLOBAL --language ko --category AI --period 14d --min-score 70 --style informative --demo
+python -m app.cli --region GLOBAL --language ko --category AI --period 14d --min-score 0 --style threads_casual --demo
 ```
 
 API:
@@ -227,6 +227,8 @@ POST /api/analyze/stream
 GET  /api/runs/{run_id}
 POST /api/runs/{run_id}/decision
 GET  /api/graph
+GET  /api/latest
+POST /api/scheduled/analyze  # X-Cron-Secret 필요
 ```
 
 승인 재개 예시:
@@ -259,3 +261,33 @@ python -m pytest tests -q -p no:cacheprovider
 - 게시 실패는 Trend/Research/Writer를 재실행하지 않고 `api_errors`와 publish 상태만 갱신합니다.
 - keyless Research는 RSS title/summary 중심입니다. 본문 라이선스와 claim-level entailment가 필요한 운영 환경에서는 허가된 원문 provider와 별도 검증기를 추가해야 합니다.
 - MemorySaver는 개발용입니다. 운영 배포에는 영속 checkpointer, 사용자별 OAuth token vault, CSRF/인증, 감사 로그가 필요합니다.
+
+## Railway + Cloudflare 일일 실행 배포
+
+구성은 Railway가 FastAPI/LangGraph/UI를 실행하고 Cloudflare Worker Cron이 매일 한국 시간 오전 9시에
+`POST /api/scheduled/analyze`를 호출합니다. 정기 실행은 `auto_publish=false`로 강제되어 실제 게시 전에
+항상 사람의 승인을 기다립니다. 결과는 `DATA_DIR/latest.json`에 저장되며 UI는 접속 시 `/api/latest`를 불러옵니다.
+
+Railway 환경 변수:
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL=gpt-5-mini
+THREADS_ACCESS_TOKEN
+THREADS_USER_ID
+CRON_SECRET
+DATA_DIR=/data
+```
+
+Railway Volume은 `/data`에 마운트합니다. 그다음 Railway 공개 도메인을 발급하고
+`cloudflare/wrangler.toml`의 `RAILWAY_API_URL`을 해당 URL로 변경합니다.
+
+Cloudflare에는 동일한 Cron secret을 등록한 뒤 Worker를 배포합니다.
+
+```powershell
+cd cloudflare
+npx wrangler secret put CRON_SECRET
+npx wrangler deploy
+```
+
+Cron 식 `0 0 * * *`는 UTC 기준 매일 00:00, 한국 시간 오전 9시입니다.
