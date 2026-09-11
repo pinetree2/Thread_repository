@@ -78,9 +78,15 @@ class ContentReviewAgent:
             issues.append("검증 사실에 없는 숫자가 있거나 검증 사실이 없습니다.")
 
         independent_publishers = {source.get("publisher") or source.get("url") for source in sources}
-        source_supported = len(independent_publishers) >= 2 and len(facts) >= 2
+        official_sources = sum(source.get("type") == "official" for source in sources)
+        source_supported = (
+            (len(independent_publishers) >= 2 and len(facts) >= 2)
+            or (official_sources >= 1 and len(facts) >= 1)
+        )
         if not source_supported:
             issues.append("독립된 Fact Source 또는 검증 사실이 부족합니다.")
+        elif len(independent_publishers) < 2:
+            issues.append("보조 뉴스 Source 장애로 공식 Source 1개 fallback을 사용했습니다.")
 
         within_limit = 0 < len(text) <= THREADS_TEXT_LIMIT
         if not within_limit:

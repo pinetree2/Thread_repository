@@ -69,6 +69,12 @@ class FactCheckAgent:
         facts_score = min(strong_verified_count / 3, 1.0) * 0.25
         confidence = round(min(1.0, source_score + diversity_score + official_score + facts_score), 2)
 
+        # Google News RSS 등 보조 수집원이 일시적으로 503이어도, Provider
+        # 공식 자료가 실제로 확인된 경우에는 사실 확인을 중단하지 않는다.
+        # 결과에는 API 오류가 그대로 남아 단일 근거 모드임을 설명한다.
+        if confidence < self.threshold and official_count >= 1 and strong_verified_count >= 1:
+            confidence = self.threshold
+
         update = {
             "verified_facts": verified[:6],
             "confidence": confidence,
