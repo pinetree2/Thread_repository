@@ -12,7 +12,7 @@ export default {
 };
 
 async function runDailyAnalysis(env) {
-  const response = await fetch(`${env.RAILWAY_API_URL}/api/scheduled/analyze`, {
+  const response = await fetch(`${env.BACKEND_API_URL}/api/scheduled/analyze`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -30,6 +30,6 @@ async function runDailyAnalysis(env) {
     }),
   });
   const body = await response.text();
-  if (!response.ok) throw new Error(`Railway ${response.status}: ${body.slice(0, 300)}`);
+  if (!response.ok) throw new Error(`Backend ${response.status}: ${body.slice(0, 300)}`);
   return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
 }

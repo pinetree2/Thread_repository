@@ -291,3 +291,11 @@ npx wrangler deploy
 ```
 
 Cron 식 `0 0 * * *`는 UTC 기준 매일 00:00, 한국 시간 오전 9시입니다.
+
+### Render 대안
+
+저장소 루트의 `render.yaml`은 Render Blueprint로 FastAPI/LangGraph Docker 서비스를 생성합니다.
+Render 생성 화면에서 `OPENAI_API_KEY`, `THREADS_ACCESS_TOKEN`, `THREADS_USER_ID`, `CRON_SECRET`만
+Secret으로 입력합니다. 무료 인스턴스의 `/tmp`는 영속 저장소가 아니므로 장기 기록 보존이 필요하면
+Postgres 저장소를 연결해야 합니다. Cloudflare Worker의 `BACKEND_API_URL` 변수에는 생성된 Render
+공개 URL을 입력합니다.

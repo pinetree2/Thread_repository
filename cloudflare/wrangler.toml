@@ -7,5 +7,5 @@ compatibility_date = "2026-09-11"
 crons = ["0 0 * * *"]
 
 [vars]
-# Railway 배포 후 실제 public URL로 변경합니다.
-RAILWAY_API_URL = "https://REPLACE_ME.up.railway.app"
+# Render 배포 후 실제 public URL로 변경합니다.
+BACKEND_API_URL = "https://REPLACE_ME.onrender.com"
