@@ -91,6 +91,22 @@ class ResearchAgent:
                     successful.append("official_sources")
             except ExternalToolError as exc:
                 api_errors.append({"source": "official_sources", "reason": str(exc)})
+                # Provider URL 자체는 AI Model Watch가 반환한 공식 lead다.
+                # Render 네트워크에서 본문 fetch만 실패해도 링크를 버리지 않고
+                # 제한된 근거로 보존하되, 설명에 fetch 실패를 명시한다.
+                parsed = urlparse(official_url)
+                sources.append(
+                    {
+                        "title": candidate.get("title", topic),
+                        "url": official_url,
+                        "type": "official",
+                        "publisher": parsed.netloc.removeprefix("www."),
+                        "published_at": candidate.get("published_at"),
+                        "description": "AI Model Watch가 제공한 Provider 공식 URL입니다. 배포 환경에서 본문 확인은 실패했습니다.",
+                    }
+                )
+                if "official_sources" not in successful:
+                    successful.append("official_sources")
 
         if state["region"] == "KR" and self.settings.has_naver_credentials:
             try:
