@@ -205,7 +205,15 @@ def analyze_stream(request: AnalyzeRequest) -> StreamingResponse:
             if event["event"] in {"complete", "error"}:
                 break
 
-    return StreamingResponse(generate(), media_type="application/x-ndjson")
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/runs/{run_id}", response_model=AnalyzeResponse)
