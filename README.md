@@ -268,21 +268,22 @@ python -m pytest tests -q -p no:cacheprovider
 `POST /api/scheduled/analyze`를 호출합니다. 정기 실행은 `auto_publish=false`로 강제되어 실제 게시 전에
 항상 사람의 승인을 기다립니다. 결과는 `DATA_DIR/latest.json`에 저장되며 UI는 접속 시 `/api/latest`를 불러옵니다.
 
-Railway 환경 변수:
+Railway/Render 환경 변수:
 
 ```text
 OPENAI_API_KEY
 OPENAI_MODEL=gpt-5-mini
 THREADS_ACCESS_TOKEN
 THREADS_USER_ID
-CRON_SECRET
+CRON_SECRET  # 선택값; 없으면 Threads 토큰의 SHA-256이 내부 기본값으로 사용됨
 DATA_DIR=/data
 ```
 
 Railway Volume은 `/data`에 마운트합니다. 그다음 Railway 공개 도메인을 발급하고
 `cloudflare/wrangler.toml`의 `RAILWAY_API_URL`을 해당 URL로 변경합니다.
 
-Cloudflare에는 동일한 Cron secret을 등록한 뒤 Worker를 배포합니다.
+Cloudflare에는 동일한 Cron secret을 등록한 뒤 Worker를 배포합니다. `CRON_SECRET`을 별도로
+만들지 않았다면 배포 명령이 현재 Threads 토큰의 SHA-256을 Worker Secret으로 등록할 수 있습니다.
 
 ```powershell
 cd cloudflare

@@ -8,4 +8,4 @@ crons = ["0 0 * * *"]
 
 [vars]
 # Render 배포 후 실제 public URL로 변경합니다.
-BACKEND_API_URL = "https://REPLACE_ME.onrender.com"
+BACKEND_API_URL = "https://trend2threads-ai.onrender.com"

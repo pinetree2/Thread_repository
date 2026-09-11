@@ -10,3 +10,4 @@ pytest-cache-files-*/
 htmlcov/
 .idea/
 .vscode/
+.wrangler/

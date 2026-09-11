@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hmac
+import hashlib
 import queue
 import threading
 import time
@@ -24,6 +25,19 @@ router = APIRouter(prefix="/api")
 
 def _result_store() -> LatestResultStore:
     return LatestResultStore(get_settings().data_dir)
+
+
+def _cron_credential(settings) -> str | None:
+    """Use an explicit secret when configured; otherwise derive one locally.
+
+    This lets a first deployment work without asking the user to invent another
+    secret. The raw Threads token is never returned or logged.
+    """
+    if settings.cron_secret:
+        return settings.cron_secret
+    if settings.threads_access_token:
+        return hashlib.sha256(settings.threads_access_token.encode()).hexdigest()
+    return None
 
 
 def _config(run_id: str) -> dict:
@@ -119,7 +133,8 @@ async def scheduled_analyze(
 ) -> AnalyzeResponse:
     """Cloudflare Cron entry point. It creates a draft but never bypasses approval."""
     settings = get_settings()
-    if not settings.cron_secret or not x_cron_secret or not hmac.compare_digest(x_cron_secret, settings.cron_secret):
+    expected_cron = _cron_credential(settings)
+    if not expected_cron or not x_cron_secret or not hmac.compare_digest(x_cron_secret, expected_cron):
         raise HTTPException(status_code=401, detail="invalid cron credential")
     safe_request = request.model_copy(update={"auto_publish": False})
     run_id = uuid4().hex
