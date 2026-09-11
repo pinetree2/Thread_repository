@@ -35,7 +35,10 @@ def _body_is_grounded(body: str, facts: list[str], topic: str) -> bool:
     claim_tokens = _tokens(" ".join(claims))
     if not claims or not evidence_tokens or not claim_tokens:
         return False
-    return len(claim_tokens & evidence_tokens) / len(claim_tokens) >= 0.18
+    overlap = claim_tokens & evidence_tokens
+    # 한국어는 조사와 어미가 붙어 전체 토큰 비율이 낮아질 수 있다.
+    # 핵심 토큰이 두 개 이상 겹치고 일정 비율 이상이면 근거 기반으로 본다.
+    return len(overlap) >= 2 and len(overlap) / len(claim_tokens) >= 0.08
 
 
 class ContentReviewAgent:
